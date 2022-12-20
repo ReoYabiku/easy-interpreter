@@ -4,39 +4,84 @@
 
 typedef struct node {
   std::string value;
-  struct node *child;
-  struct node *brother;
+  struct node *parent;
+  struct node *left;
+  struct node *right;
 } Node;
 
 class parser {
   public:
 
   static struct node* analyze(std::vector<std::string> tokens) {
-    Node *child3;
-    child3 = (Node *)malloc(sizeof(Node));
-    child3->value = "5";
-    child3->child = NULL;
-    child3->brother = NULL;
-
-    Node *child2;
-    child2 = (Node *)malloc(sizeof(Node));
-    child2->value = "=";
-    child2->child = NULL;
-    child2->brother = NULL;
-
-    Node *child1;
-    child1 = (Node *)malloc(sizeof(Node));
-    child1->value = "x";
-    child1->child = NULL;
-    child1->brother = NULL;
-
     Node *root;
     root = (Node *)malloc(sizeof(Node));
-    root->child = child1;
-    child1->brother = child2;
-    child2->brother = child3;
-    root->brother = NULL;
+    Node *left_side;
+    left_side = (Node *)malloc(sizeof(Node));
+    left_side->value = tokens[0];
 
+    Node *tmp; // 最右端のノードへのポインタを保持する
+
+    for(int i = 1; i < tokens.size(); i += 2) {
+      if(tokens[i] == "=") {
+        root->value = tokens[i];
+        root->left = left_side;
+        left_side->parent = root;
+
+        Node *pre;
+        pre = (Node *)malloc(sizeof(Node));
+        tmp = pre;
+        pre->value = tokens[i+1];
+        pre->parent = root;
+        root->right = pre;
+      }
+
+      if(tokens[i] == "*" || tokens[i] == "/") {
+        Node *parent = tmp->parent;
+        Node *now;
+        now = (Node *)malloc(sizeof(Node));
+        now->value = tokens[i];
+        now->left = tmp;
+        tmp->parent = now;
+
+        now->parent = parent;
+        parent->right = now;
+
+        Node *right;
+        right = (Node *)malloc(sizeof(Node));
+        right->value = tokens[i+1];
+        now->right = right;
+        right->parent = now;
+
+        tmp = right;
+      }
+
+      if(tokens[i] == "+" || tokens[i] == "-") {
+        Node *now;
+        now = (Node *)malloc(sizeof(Node));
+        now->value = tokens[i];
+
+        while(tmp->parent->value == "*" || tmp->parent->value == "/") {
+          tmp = tmp->parent;
+        }
+
+        Node *parent = tmp->parent;
+
+        parent->right = now;
+        now->parent = parent;
+
+        now->left = tmp;
+        tmp->parent = now;
+
+        Node *right;
+        right = (Node *)malloc(sizeof(Node));
+        right->value = tokens[i+1];
+        right->parent = now;
+        now->right = right;
+
+        tmp = right;
+      }
+    }
+    
     return root;
   }
 };
